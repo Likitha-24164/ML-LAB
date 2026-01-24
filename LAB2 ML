@@ -1,0 +1,50 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, accuracy_score
+
+df = pd.read_excel("Lab Session Data.xlsx", sheet_name=0) 
+df.columns = df.columns.str.strip() 
+
+feature_cols = ["Candies (#)", "Mangoes (Kg)", "Milk Packets (#)"]
+output_col = "Payment (Rs)"
+
+X = df[feature_cols].apply(pd.to_numeric, ).to_numpy()
+y = df[[output_col]].apply(pd.to_numeric, ).to_numpy()
+
+print("Feature Matrix X:\n", X)
+print("\nOutput Vector y:\n", y)
+
+num_vectors, dimension = X.shape
+print(f"\nNumber of vectors (observations): {num_vectors}")
+print(f"Dimension of the vector space: {dimension}")
+
+rank = np.linalg.matrix_rank(X)
+print("Rank of feature matrix X:", rank)
+
+X_pinv = np.linalg.pinv(X)
+costs = X_pinv.dot(y)
+
+print("\nCost per unit of each product:")
+for product, cost in zip(feature_cols, costs.flatten()):
+    print(f"{product}: Rs. {cost:.2f}")
+
+df['Class'] = np.where(y.flatten() > 200, 'RICH', 'POOR')
+print("\nCustomer Labels (based on Payment):\n")
+print(df[['Customer', 'Payment (Rs)', 'Class']])
+
+clf = LogisticRegression()
+clf.fit(X, df['Class'])
+
+df['Predicted Class'] = clf.predict(X)
+
+print("\nCustomer Classification Predictions:\n")
+print(df[['Customer', 'Payment (Rs)', 'Class', 'Predicted Class']])
+
+print("\nClassification Report:")
+print(classification_report(df['Class'], df['Predicted Class']))
+print("Accuracy:", accuracy_score(df['Class'], df['Predicted Class']))
+
+#multiplying X and costs to find and verify Y
+a=np.dot(X,costs)
+print(a)
